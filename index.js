@@ -110,9 +110,15 @@ async function reply(token, message) {
 	}
 }
 
+app.get('/ping', (req, res) => {
+	console.log('🔁 Ping received at', new Date().toISOString());
+	res.status(200).send('pong');
+});
 
 // 🚀 サーバー起動（Railway対応）
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
 	console.log(`✅ Server is running on port ${PORT}`);
 });
+
+
