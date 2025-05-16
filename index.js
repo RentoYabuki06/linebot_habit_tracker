@@ -50,6 +50,29 @@ app.post('/webhook', async (req, res) => {
         try {
             const events = req.body.events;
             for (const event of events) {
+                // グループ・ルームへの参加イベント処理
+                if (event.type === 'join') {
+                    console.log("🎉 参加イベント検知:", event.source.type);
+                    const message = "こんにちは！私は習慣記録Botです。\n\n" + 
+                                    "毎日の習慣を記録して、継続をサポートします。\n" +
+                                    "使い方を確認するには `/help` と送信してください。";
+                    await reply(event.replyToken, message);
+                    continue;
+                }
+                
+                // 友達追加イベント処理
+                if (event.type === 'follow') {
+                    console.log("👋 友達追加イベント検知");
+                    const message = "友達追加ありがとうございます！\n\n" +
+                                    "私は習慣記録Botです。毎日の習慣を簡単に記録して、継続をサポートします。\n\n" +
+                                    "まずは `/goal 習慣名 目標回数` で目標を設定してみましょう。\n" +
+                                    "例: `/goal 腕立て 30`\n\n" +
+                                    "使い方の詳細は `/help` で確認できます。";
+                    await reply(event.replyToken, message);
+                    continue;
+                }
+
+                // メッセージイベント処理（既存コード）
                 if (event.type !== 'message' || !event.message.text) continue;
 
                 const userId = event.source.userId;
@@ -70,7 +93,7 @@ app.post('/webhook', async (req, res) => {
                     await handleGoalCommand(event, userId, text);
                 } else if (text.startsWith('/delete')) {
                     await handleDeleteCommand(event, userId, text);
-                } else if (text.startsWith('/change')) { // 新しいコマンド
+                } else if (text.startsWith('/change')) {
                     await handleChangeCommand(event, userId, text);
                 } else {
                     await reply(event.replyToken, '未知のコマンドです。\n`/help` で使い方を確認できます。');
