@@ -29,84 +29,84 @@ app.post('/webhook', async (req, res) => {
 	console.log("👤 userId:", req.body.events[0]?.source?.userId);
 	// avoid timeout
 
-	(async () => {
-		try {
-			const events = req.body.events;
-			for (const event of events) {
-				if (event.type !== 'message' || !event.message.text) continue;
+	// (async () => {
+	// 	try {
+	// 		const events = req.body.events;
+	// 		for (const event of events) {
+	// 			if (event.type !== 'message' || !event.message.text) continue;
 
-				const userId = event.source.userId;
-				const text = event.message.text.trim();
+	// 			const userId = event.source.userId;
+	// 			const text = event.message.text.trim();
 
-				// `/done 25/30` の形式にマッチ
-				const match = text.match(/\/done\s+(\d+)\s*\/\s*(\d+)/);
-				if (!match) {
-					await reply(event.replyToken, '記録形式が正しくありません。\n例: `/done 25/30`');
-					continue;
-				}
+	// 			// `/done 25/30` の形式にマッチ
+	// 			const match = text.match(/\/done\s+(\d+)\s*\/\s*(\d+)/);
+	// 			if (!match) {
+	// 				await reply(event.replyToken, '記録形式が正しくありません。\n例: `/done 25/30`');
+	// 				continue;
+	// 			}
 
-				const actual = parseInt(match[1], 10);
-				const goal = parseInt(match[2], 10);
-				const today = new Date().toISOString().split('T')[0];
+	// 			const actual = parseInt(match[1], 10);
+	// 			const goal = parseInt(match[2], 10);
+	// 			const today = new Date().toISOString().split('T')[0];
 
-				// 習慣のIDを取得（1人1習慣想定）
-				const { data: habits, error: habitErr } = await supabase
-					.from('habits')
-					.select('id')
-					.eq('user_id', userId)
-					.limit(1);
+	// 			// 習慣のIDを取得（1人1習慣想定）
+	// 			const { data: habits, error: habitErr } = await supabase
+	// 				.from('habits')
+	// 				.select('id')
+	// 				.eq('user_id', userId)
+	// 				.limit(1);
 
-				if (!habits || habits.length === 0) {
-					await reply(event.replyToken, '習慣が登録されていません。');
-					continue;
-				}
+	// 			if (!habits || habits.length === 0) {
+	// 				await reply(event.replyToken, '習慣が登録されていません。');
+	// 				continue;
+	// 			}
 
-				const habitId = habits[0].id;
+	// 			const habitId = habits[0].id;
 
-				// logs に記録
-				const { error: logErr } = await supabase.from('logs').insert({
-					habit_id: habitId,
-					user_id: userId,
-					logged_at: today,
-					actual_count: actual,
-					note: null,
-				});
+	// 			// logs に記録
+	// 			const { error: logErr } = await supabase.from('logs').insert({
+	// 				habit_id: habitId,
+	// 				user_id: userId,
+	// 				logged_at: today,
+	// 				actual_count: actual,
+	// 				note: null,
+	// 			});
 
-				if (logErr) {
-					console.error(logErr);
-					await reply(event.replyToken, '記録中にエラーが発生しました。');
-					continue;
-				}
+	// 			if (logErr) {
+	// 				console.error(logErr);
+	// 				await reply(event.replyToken, '記録中にエラーが発生しました。');
+	// 				continue;
+	// 			}
 
-				const percent = Math.round((actual / goal) * 100);
-				await reply(event.replyToken, `✅ ${actual}/${goal} 回を記録しました！\n📊 達成率：${percent}%`);
-			}
-		} catch (e) {
-			console.error('Webhook Error:', e);
-		}
-	})();
+	// 			const percent = Math.round((actual / goal) * 100);
+	// 			await reply(event.replyToken, `✅ ${actual}/${goal} 回を記録しました！\n📊 達成率：${percent}%`);
+	// 		}
+	// 	} catch (e) {
+	// 		console.error('Webhook Error:', e);
+	// 	}
+	// })();
 });
 
-// LINEへの返信
-async function reply(token, message) {
-	try {
-		await axios.post(
-			'https://api.line.me/v2/bot/message/reply',
-			{
-				replyToken: token,
-				messages: [{ type: 'text', text: message }],
-			},
-			{
-				headers: {
-					Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
-					'Content-Type': 'application/json',
-				},
-			}
-		);
-	} catch (err) {
-		console.error('❌ LINE返信エラー:', err?.response?.data || err.message);
-	}
-}
+// // LINEへの返信
+// async function reply(token, message) {
+// 	try {
+// 		await axios.post(
+// 			'https://api.line.me/v2/bot/message/reply',
+// 			{
+// 				replyToken: token,
+// 				messages: [{ type: 'text', text: message }],
+// 			},
+// 			{
+// 				headers: {
+// 					Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
+// 					'Content-Type': 'application/json',
+// 				},
+// 			}
+// 		);
+// 	} catch (err) {
+// 		console.error('❌ LINE返信エラー:', err?.response?.data || err.message);
+// 	}
+// }
 
 
 // 🚀 サーバー起動（Railway対応）
