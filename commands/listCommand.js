@@ -1,15 +1,15 @@
 import { supabase } from '../supabaseClient.js';
 import { reply } from '../utils.js';
-import { calculateStreak } from './streakCommand.js'; // streakの計算関数をインポート
+import { calculateStreak } from './streakCommand.js';
 
 export async function handleListCommand(event, userId) {
     console.log(`📋 listコマンド実行: userId=${userId}`);
     
     try {
-        // 1. 登録されている習慣を取得
+        // 習慣一覧をgoal_countも含めて取得
         const { data: habits, error } = await supabase
             .from('habits')
-            .select('id, title')
+            .select('id, title, goal_count')
             .eq('user_id', userId);
             
         if (error) {
@@ -26,31 +26,10 @@ export async function handleListCommand(event, userId) {
             return;
         }
         
-        // 2. 各習慣の最新の目標値を取得
-        const habitDetails = [];
-        
-        for (const habit of habits) {
-            // 最新のログから目標値を取得
-            const { data: latestLog } = await supabase
-                .from('logs')
-                .select('goal_count')
-                .eq('habit_id', habit.id)
-                .order('logged_at', { ascending: false })
-                .limit(1);
-                
-            const goalCount = latestLog && latestLog.length > 0 ? latestLog[0].goal_count : "未設定";
-            
-            habitDetails.push({
-                id: habit.id,
-                title: habit.title,
-                goalCount
-            });
-        }
-        
         let message = '📋 あなたの習慣一覧:\n\n';
         
-        // 3. 各習慣の連続記録情報を取得
-        for (const habit of habitDetails) {
+        // 各習慣の連続記録情報を取得
+        for (const habit of habits) {
             try {
                 // 習慣ごとの連続記録を計算
                 const streakInfo = await calculateStreak(userId, habit.title);
@@ -62,14 +41,17 @@ export async function handleListCommand(event, userId) {
                     streakDisplay = '記録なし';
                 }
                 
-                message += `• ${habit.title}: 目標${habit.goalCount}回 - ${streakDisplay}\n`;
+                // habitsテーブルのgoal_countを使用
+                const goalCount = habit.goal_count || "未設定";
+                message += `• ${habit.title}: 目標${goalCount}回 - ${streakDisplay}\n`;
             } catch (streakError) {
                 console.error(`Streak計算エラー (${habit.title}):`, streakError);
-                message += `• ${habit.title}: 目標${habit.goalCount}回\n`;
+                message += `• ${habit.title}: 目標${habit.goal_count || "未設定"}回\n`;
             }
         }
         
         message += '\n特定の習慣を記録するには: `/done <習慣名> <実績>/<目標>`';
+        message += '\n目標を変更するには: `/change <習慣名> <新しい目標回数>`';
         
         console.log('送信メッセージ:', message);
         await reply(event.replyToken, message);

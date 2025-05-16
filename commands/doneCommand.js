@@ -3,19 +3,30 @@ import { reply } from '../utils.js';
 import { calculateStreak } from './streakCommand.js';
 
 export async function handleDoneCommand(event, userId, text) {
-    // `/done <習慣名> <実績>/<目標>` の形式にマッチ
-    const match = text.match(/\/done\s+([^\s]+)\s+(\d+)\s*\/\s*(\d+)/);
-    if (!match) {
-        await reply(event.replyToken, '記録形式が正しくありません。\n例: `/done 腕立て 25/30`');
+    // `/done <習慣名> <実績>/<目標>` もしくは `/done <習慣名> <実績>` の形式にマッチ
+    const matchWithGoal = text.match(/\/done\s+([^\s]+)\s+(\d+)\s*\/\s*(\d+)/);
+    const matchOnlyActual = text.match(/\/done\s+([^\s]+)\s+(\d+)$/);
+    
+    let habitName, actual, goal;
+    
+    if (matchWithGoal) {
+        // 目標も指定されている場合
+        habitName = matchWithGoal[1];
+        actual = parseInt(matchWithGoal[2], 10);
+        goal = parseInt(matchWithGoal[3], 10);
+    } else if (matchOnlyActual) {
+        // 実績のみ指定されている場合
+        habitName = matchOnlyActual[1];
+        actual = parseInt(matchOnlyActual[2], 10);
+        // goal は後でhabitsテーブルから取得
+    } else {
+        await reply(event.replyToken, '記録形式が正しくありません。\n例: `/done 腕立て 25` または `/done 腕立て 25/30`');
         return;
     }
-
-    const habitName = match[1];
-    const actual = parseInt(match[2], 10);
-    const goal = parseInt(match[3], 10);
+    
     const today = new Date().toISOString().split('T')[0];
 
-    // 習慣のIDを取得
+    // 習慣のIDと目標値を取得
     const { data: habits, error: habitErr } = await supabase
         .from('habits')
         .select('id, goal_count')
@@ -28,7 +39,15 @@ export async function handleDoneCommand(event, userId, text) {
     }
 
     const habitId = habits[0].id;
-    const targetCount = habits[0].goal_count;
+    
+    // 目標値が指定されていない場合はhabitsテーブルから取得
+    if (!goal) {
+        goal = habits[0].goal_count;
+        if (!goal) {
+            await reply(event.replyToken, `「${habitName}」の目標が設定されていません。\n\`/change ${habitName} 目標回数\` で目標を設定してください。`);
+            return;
+        }
+    }
 
     // logs に記録
     const { error: logErr } = await supabase.from('logs').insert({
@@ -36,6 +55,7 @@ export async function handleDoneCommand(event, userId, text) {
         user_id: userId,
         logged_at: today,
         actual_count: actual,
+        goal_count: goal,
         note: null,
     });
 

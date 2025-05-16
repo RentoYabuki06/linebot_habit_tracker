@@ -10,7 +10,8 @@ import {
     handleStreakCommand,
     handleGoalCommand,
     handleListCommand,
-    handleDeleteCommand
+    handleDeleteCommand,
+    handleChangeCommand
 } from './commands/index.js';
 import { reply } from './utils.js';
 
@@ -59,7 +60,7 @@ app.post('/webhook', async (req, res) => {
                     await handleDoneCommand(event, userId, text);
                 } else if (text.startsWith('/help')) {
                     await handleHelpCommand(event);
-                } else if (text.startsWith('/list')) {  // 新しいコマンド
+                } else if (text.startsWith('/list')) {
                     await handleListCommand(event, userId);
                 } else if (text.startsWith('/summary')) {
                     await handleSummaryCommand(event, userId, text);
@@ -69,6 +70,8 @@ app.post('/webhook', async (req, res) => {
                     await handleGoalCommand(event, userId, text);
                 } else if (text.startsWith('/delete')) {
                     await handleDeleteCommand(event, userId, text);
+                } else if (text.startsWith('/change')) { // 新しいコマンド
+                    await handleChangeCommand(event, userId, text);
                 } else {
                     await reply(event.replyToken, '未知のコマンドです。\n`/help` で使い方を確認できます。');
                 }
