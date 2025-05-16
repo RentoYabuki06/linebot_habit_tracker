@@ -21,6 +21,8 @@ function validateSignature(req) {
 // Webhookエンドポイント
 app.post('/webhook', async (req, res) => {
 	console.log('📩 Webhook received:', JSON.stringify(req.body, null, 2));
+	console.log("👤 userId:", req.body.events[0]?.source?.userId);
+
 
   if (!validateSignature(req)) {
     return res.status(403).send('Invalid signature');
