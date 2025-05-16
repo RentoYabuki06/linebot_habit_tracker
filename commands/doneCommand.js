@@ -18,9 +18,9 @@ export async function handleDoneCommand(event, userId, text) {
     // 習慣のIDを取得
     const { data: habits, error: habitErr } = await supabase
         .from('habits')
-        .select('id, target_count')
+        .select('id, goal_count')
         .eq('user_id', userId)
-        .eq('name', habitName);
+        .eq('title', habitName);
 
     if (!habits || habits.length === 0) {
         await reply(event.replyToken, `「${habitName}」という習慣が登録されていません。\n\`/goal ${habitName} 目標回数\` で目標を設定してください。`);
@@ -28,7 +28,7 @@ export async function handleDoneCommand(event, userId, text) {
     }
 
     const habitId = habits[0].id;
-    const targetCount = habits[0].target_count;
+    const targetCount = habits[0].goal_count;
 
     // logs に記録
     const { error: logErr } = await supabase.from('logs').insert({

@@ -9,12 +9,12 @@ export async function calculateStreak(userId, habitName = null) {
     // habitNameが指定されている場合は特定の習慣、そうでなければすべての習慣
     let query = supabase
         .from('logs')
-        .select('logged_at, habits!inner(id, name)')
+        .select('logged_at, habits!inner(id, title)')
         .eq('user_id', userId);
     
     // 特定の習慣名が指定されている場合、条件を追加
     if (habitName) {
-        query = query.eq('habits.name', habitName);
+        query = query.eq('habits.title', habitName);
     }
     
     const { data: logs, error } = await query
@@ -114,7 +114,7 @@ export async function handleStreakCommand(event, userId, text) {
     if (!match) {
         const { data: habits } = await supabase
             .from('habits')
-            .select('name')
+            .select('title')
             .eq('user_id', userId);
             
         if (!habits || habits.length === 0) {
@@ -126,11 +126,11 @@ export async function handleStreakCommand(event, userId, text) {
         let allStreaksMessage = '📊 あなたの習慣の連続記録:\n\n';
         
         for (const habit of habits) {
-            const streakInfo = await calculateStreak(userId, habit.name);
+            const streakInfo = await calculateStreak(userId, habit.title);
             if (streakInfo) {
-                allStreaksMessage += `${habit.name}: ${streakInfo.emoji} ${streakInfo.currentStreak}日\n`;
+                allStreaksMessage += `${habit.title}: ${streakInfo.emoji} ${streakInfo.currentStreak}日\n`;
             } else {
-                allStreaksMessage += `${habit.name}: 記録なし\n`;
+                allStreaksMessage += `${habit.title}: 記録なし\n`;
             }
         }
         
