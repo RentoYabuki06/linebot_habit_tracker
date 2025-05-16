@@ -55,6 +55,7 @@ app.post('/webhook', async (req, res) => {
                 // コマンドの種類を判別
                 if (text.startsWith('/done')) {
                     await handleDoneCommand(event, userId, text);
+                    await handleStreakCommand(event, userId, text);
                 } else if (text.startsWith('/help')) {
                     await handleHelpCommand(event);
                 } else if (text.startsWith('/summary')) {
