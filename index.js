@@ -18,6 +18,11 @@ function validateSignature(req) {
 	return signature === hash;
 }
 
+process.on('unhandledRejection', (reason, promise) => {
+	console.error('❌ Unhandled Rejection:', reason);
+});
+
+
 // Webhookエンドポイント
 app.post('/webhook', async (req, res) => {
 	console.log("🔐 CHANNEL_SECRET:", process.env.LINE_CHANNEL_SECRET);
@@ -119,6 +124,10 @@ app.get('/ping', (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
 	console.log(`✅ Server is running on port ${PORT}`);
+	console.log('📡 Environment:', {
+		LINE_CHANNEL_SECRET: !!process.env.LINE_CHANNEL_SECRET,
+		SUPABASE_URL: process.env.SUPABASE_URL,
+	});
 });
 
 
