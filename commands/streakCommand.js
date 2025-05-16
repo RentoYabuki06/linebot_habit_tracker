@@ -1,7 +1,8 @@
 import { supabase } from '../supabaseClient.js';
 import { reply } from '../utils.js';
 
-export async function handleStreakCommand(event, userId) {
+// streak計算だけを行う関数（外部からも利用可能）
+export async function calculateStreak(userId) {
     // 連続達成日数を取得
     const today = new Date().toISOString().split('T')[0];
     
@@ -13,13 +14,11 @@ export async function handleStreakCommand(event, userId) {
         
     if (error) {
         console.error(error);
-        await reply(event.replyToken, '記録の取得中にエラーが発生しました。');
-        return;
+        return null;
     }
     
     if (!logs || logs.length === 0) {
-        await reply(event.replyToken, '記録がありません。\n`/done` コマンドで記録を始めましょう！');
-        return;
+        return { currentStreak: 0, maxStreak: 0, emoji: '' };
     }
     
     // 日付の配列に変換
@@ -91,8 +90,24 @@ export async function handleStreakCommand(event, userId) {
     else if (currentStreak >= 7) streakEmoji = '🔥';
     else if (currentStreak >= 3) streakEmoji = '✨';
     
+    return {
+        currentStreak,
+        maxStreak,
+        emoji: streakEmoji
+    };
+}
+
+// 元の関数はそのまま残す
+export async function handleStreakCommand(event, userId) {
+    const streakInfo = await calculateStreak(userId);
+    
+    if (!streakInfo) {
+        await reply(event.replyToken, '記録の取得中にエラーが発生しました。');
+        return;
+    }
+    
     await reply(event.replyToken, 
-        `${streakEmoji} 現在の連続記録日数: ${currentStreak}日 ${streakEmoji}\n` +
-        `🏆 最大連続記録日数: ${maxStreak}日！`
+        `${streakInfo.emoji} 現在の連続記録日数: ${streakInfo.currentStreak}日 ${streakInfo.emoji}\n` +
+        `🏆 最大連続記録日数: ${streakInfo.maxStreak}日！`
     );
 }
