@@ -2,10 +2,8 @@
 import express from 'express';
 import axios from 'axios';
 import crypto from 'crypto';
-import dotenv from 'dotenv';
 import { supabase } from './supabaseClient.js';
 
-dotenv.config();
 const app = express();
 app.use(express.json());
 
