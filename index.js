@@ -20,6 +20,7 @@ function validateSignature(req) {
 
 // Webhookエンドポイント
 app.post('/webhook', async (req, res) => {
+	console.log("🔐 CHANNEL_SECRET:", process.env.LINE_CHANNEL_SECRET);
 	if (!validateSignature(req)) {
 		console.warn("Invalid signature");
 		return res.status(403).send('Invalid signature');
