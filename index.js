@@ -9,7 +9,8 @@ import {
     handleSummaryCommand,
     handleStreakCommand,
     handleGoalCommand,
-    handleListCommand // 新しくインポート
+    handleListCommand,
+    handleDeleteCommand
 } from './commands/index.js';
 import { reply } from './utils.js';
 
@@ -66,6 +67,8 @@ app.post('/webhook', async (req, res) => {
                     await handleStreakCommand(event, userId, text);
                 } else if (text.startsWith('/goal')) {
                     await handleGoalCommand(event, userId, text);
+                } else if (text.startsWith('/delete')) {
+                    await handleDeleteCommand(event, userId, text);
                 } else {
                     await reply(event.replyToken, '未知のコマンドです。\n`/help` で使い方を確認できます。');
                 }

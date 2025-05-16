@@ -17,6 +17,9 @@ export async function handleHelpCommand(event) {
 /streak <習慣名> - 連続記録日数を表示
 例: /streak 腕立て
   
+/delete <習慣名> - 習慣を削除する
+例: /delete 腕立て
+  
 /help - このヘルプを表示`;
 
     await reply(event.replyToken, helpMessage);
