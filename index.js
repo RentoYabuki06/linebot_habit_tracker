@@ -89,20 +89,25 @@ app.post('/webhook', async (req, res) => {
 
 // LINEへの返信
 async function reply(token, message) {
-	await axios.post(
-		'https://api.line.me/v2/bot/message/reply',
-		{
-		replyToken: token,
-		messages: [{ type: 'text', text: message }],
-		},
-		{
-		headers: {
-			Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
-			'Content-Type': 'application/json',
-		},
-		}
-	);
+	try {
+		await axios.post(
+			'https://api.line.me/v2/bot/message/reply',
+			{
+				replyToken: token,
+				messages: [{ type: 'text', text: message }],
+			},
+			{
+				headers: {
+					Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
+					'Content-Type': 'application/json',
+				},
+			}
+		);
+	} catch (err) {
+		console.error('❌ LINE返信エラー:', err?.response?.data || err.message);
+	}
 }
+
 
 // 🚀 サーバー起動（Railway対応）
 const PORT = process.env.PORT || 3000;
