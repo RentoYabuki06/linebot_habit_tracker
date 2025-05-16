@@ -5,7 +5,7 @@ import { calculateStreak } from './streakCommand.js'; // streakの計算関数�
 export async function handleListCommand(event, userId) {
     const { data: habits, error } = await supabase
         .from('habits')
-        .select('id, name, target_count')
+        .select('id, title, target_count')
         .eq('user_id', userId);
         
     if (error) {
@@ -24,7 +24,7 @@ export async function handleListCommand(event, userId) {
     // 各習慣の連続記録情報を取得
     for (const habit of habits) {
         // 習慣ごとの連続記録を計算
-        const streakInfo = await calculateStreak(userId, habit.name);
+        const streakInfo = await calculateStreak(userId, habit.title);
         
         let streakDisplay = '';
         if (streakInfo && streakInfo.currentStreak > 0) {
@@ -33,7 +33,7 @@ export async function handleListCommand(event, userId) {
             streakDisplay = '記録なし';
         }
         
-        message += `• ${habit.name}: 目標${habit.target_count}回 - ${streakDisplay}\n`;
+        message += `• ${habit.title}: 目標${habit.target_count}回 - ${streakDisplay}\n`;
     }
     
     message += '\n特定の習慣を記録するには: `/done <習慣名> <実績>/<目標>`';
