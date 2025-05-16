@@ -8,7 +8,8 @@ import {
     handleHelpCommand,
     handleSummaryCommand,
     handleStreakCommand,
-    handleGoalCommand
+    handleGoalCommand,
+    handleListCommand // 新しくインポート
 } from './commands/index.js';
 import { reply } from './utils.js';
 
@@ -57,10 +58,12 @@ app.post('/webhook', async (req, res) => {
                     await handleDoneCommand(event, userId, text);
                 } else if (text.startsWith('/help')) {
                     await handleHelpCommand(event);
+                } else if (text.startsWith('/list')) {  // 新しいコマンド
+                    await handleListCommand(event, userId);
                 } else if (text.startsWith('/summary')) {
-                    await handleSummaryCommand(event, userId);
+                    await handleSummaryCommand(event, userId, text);
                 } else if (text.startsWith('/streak')) {
-                    await handleStreakCommand(event, userId);
+                    await handleStreakCommand(event, userId, text);
                 } else if (text.startsWith('/goal')) {
                     await handleGoalCommand(event, userId, text);
                 } else {

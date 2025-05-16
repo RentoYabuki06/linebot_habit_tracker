@@ -1,32 +1,34 @@
 import { supabase } from '../supabaseClient.js';
 import { reply } from '../utils.js';
-import { calculateStreak } from './streakCommand.js'; // calculateStreak をインポート
+import { calculateStreak } from './streakCommand.js';
 
 export async function handleDoneCommand(event, userId, text) {
-    // `/done 25/30` の形式にマッチ
-    const match = text.match(/\/done\s+(\d+)\s*\/\s*(\d+)/);
+    // `/done <習慣名> <実績>/<目標>` の形式にマッチ
+    const match = text.match(/\/done\s+([^\s]+)\s+(\d+)\s*\/\s*(\d+)/);
     if (!match) {
-        await reply(event.replyToken, '記録形式が正しくありません。\n例: `/done 25/30`');
+        await reply(event.replyToken, '記録形式が正しくありません。\n例: `/done 腕立て 25/30`');
         return;
     }
 
-    const actual = parseInt(match[1], 10);
-    const goal = parseInt(match[2], 10);
+    const habitName = match[1];
+    const actual = parseInt(match[2], 10);
+    const goal = parseInt(match[3], 10);
     const today = new Date().toISOString().split('T')[0];
 
-    // 習慣のIDを取得（1人1習慣想定）
+    // 習慣のIDを取得
     const { data: habits, error: habitErr } = await supabase
         .from('habits')
-        .select('id')
+        .select('id, target_count')
         .eq('user_id', userId)
-        .limit(1);
+        .eq('name', habitName);
 
     if (!habits || habits.length === 0) {
-        await reply(event.replyToken, '習慣が登録されていません。\n`/goal` で目標を設定してください。');
+        await reply(event.replyToken, `「${habitName}」という習慣が登録されていません。\n\`/goal ${habitName} 目標回数\` で目標を設定してください。`);
         return;
     }
 
     const habitId = habits[0].id;
+    const targetCount = habits[0].target_count;
 
     // logs に記録
     const { error: logErr } = await supabase.from('logs').insert({
@@ -43,17 +45,15 @@ export async function handleDoneCommand(event, userId, text) {
         return;
     }
 
-    // streak情報を取得
-    const streakInfo = await calculateStreak(userId);
+    // この特定の習慣のstreak情報を取得
+    const streakInfo = await calculateStreak(userId, habitName);
     
     const percent = Math.round((actual / goal) * 100);
-    let message = `✅ ${actual}/${goal} 回を記録しました！\n📊 達成率：${percent}%`;
+    let message = `✅ 「${habitName}」: ${actual}/${goal} 回を記録しました！\n📊 達成率：${percent}%`;
     
-    // streakInfo が取得できていれば追加
     if (streakInfo) {
         message += `\n\n${streakInfo.emoji} 連続記録: ${streakInfo.currentStreak}日`;
         
-        // 連続日数が特定のマイルストーンに到達した場合、特別なメッセージを追加
         if (streakInfo.currentStreak === 7) {
             message += `\n🎉 1週間継続達成！素晴らしい！`;
         } else if (streakInfo.currentStreak === 30) {

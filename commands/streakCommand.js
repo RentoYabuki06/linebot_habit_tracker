@@ -1,15 +1,23 @@
 import { supabase } from '../supabaseClient.js';
 import { reply } from '../utils.js';
 
-// streak計算だけを行う関数（外部からも利用可能）
-export async function calculateStreak(userId) {
+// streak計算関数を特定の習慣に対応
+export async function calculateStreak(userId, habitName = null) {
     // 連続達成日数を取得
     const today = new Date().toISOString().split('T')[0];
     
-    const { data: logs, error } = await supabase
+    // habitNameが指定されている場合は特定の習慣、そうでなければすべての習慣
+    let query = supabase
         .from('logs')
-        .select('logged_at')
-        .eq('user_id', userId)
+        .select('logged_at, habits!inner(id, name)')
+        .eq('user_id', userId);
+    
+    // 特定の習慣名が指定されている場合、条件を追加
+    if (habitName) {
+        query = query.eq('habits.name', habitName);
+    }
+    
+    const { data: logs, error } = await query
         .order('logged_at', { ascending: false });
         
     if (error) {
@@ -98,15 +106,48 @@ export async function calculateStreak(userId) {
 }
 
 // 元の関数はそのまま残す
-export async function handleStreakCommand(event, userId) {
-    const streakInfo = await calculateStreak(userId);
+export async function handleStreakCommand(event, userId, text) {
+    // `/streak <習慣名>` の形式にマッチ
+    const match = text.match(/\/streak\s+([^\s]+)/);
+    
+    // 習慣名が指定されていない場合はすべての習慣の連続記録を表示
+    if (!match) {
+        const { data: habits } = await supabase
+            .from('habits')
+            .select('name')
+            .eq('user_id', userId);
+            
+        if (!habits || habits.length === 0) {
+            await reply(event.replyToken, '習慣が登録されていません。');
+            return;
+        }
+        
+        // すべての習慣のstreakを取得
+        let allStreaksMessage = '📊 あなたの習慣の連続記録:\n\n';
+        
+        for (const habit of habits) {
+            const streakInfo = await calculateStreak(userId, habit.name);
+            if (streakInfo) {
+                allStreaksMessage += `${habit.name}: ${streakInfo.emoji} ${streakInfo.currentStreak}日\n`;
+            } else {
+                allStreaksMessage += `${habit.name}: 記録なし\n`;
+            }
+        }
+        
+        await reply(event.replyToken, allStreaksMessage);
+        return;
+    }
+    
+    const habitName = match[1];
+    const streakInfo = await calculateStreak(userId, habitName);
     
     if (!streakInfo) {
-        await reply(event.replyToken, '記録の取得中にエラーが発生しました。');
+        await reply(event.replyToken, `「${habitName}」という習慣が見つからないか、記録がありません。`);
         return;
     }
     
     await reply(event.replyToken, 
+        `「${habitName}」の記録:\n` +
         `${streakInfo.emoji} 現在の連続記録日数: ${streakInfo.currentStreak}日 ${streakInfo.emoji}\n` +
         `🏆 最大連続記録日数: ${streakInfo.maxStreak}日！`
     );

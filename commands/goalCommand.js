@@ -2,20 +2,22 @@ import { supabase } from '../supabaseClient.js';
 import { reply } from '../utils.js';
 
 export async function handleGoalCommand(event, userId, text) {
-    // `/goal 30` の形式にマッチ
-    const match = text.match(/\/goal\s+(\d+)/);
+    // `/goal <習慣名> <目標回数>` の形式にマッチ
+    const match = text.match(/\/goal\s+([^\s]+)\s+(\d+)/);
     if (!match) {
-        await reply(event.replyToken, '目標設定の形式が正しくありません。\n例: `/goal 30`');
+        await reply(event.replyToken, '目標設定の形式が正しくありません。\n例: `/goal 腕立て 30`');
         return;
     }
     
-    const goalCount = parseInt(match[1], 10);
+    const habitName = match[1];
+    const goalCount = parseInt(match[2], 10);
     
-    // ユーザーの習慣を取得
+    // ユーザーの特定の習慣を取得
     const { data: habits, error: selectErr } = await supabase
         .from('habits')
         .select('id')
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .eq('name', habitName);
         
     if (selectErr) {
         console.error(selectErr);
@@ -31,7 +33,7 @@ export async function handleGoalCommand(event, userId, text) {
             .from('habits')
             .insert({
                 user_id: userId,
-                name: 'マイ習慣',
+                name: habitName,
                 target_count: goalCount,
                 frequency: 'daily'
             })
@@ -44,6 +46,7 @@ export async function handleGoalCommand(event, userId, text) {
         }
         
         habitId = newHabit[0].id;
+        await reply(event.replyToken, `🎯 「${habitName}」の目標を${goalCount}回に設定しました！\n\n記録は \`/done ${habitName} 実績/${goalCount}\` で行えます。`);
     } else {
         // 既存の習慣を更新
         habitId = habits[0].id;
@@ -57,7 +60,7 @@ export async function handleGoalCommand(event, userId, text) {
             await reply(event.replyToken, '目標の更新中にエラーが発生しました。');
             return;
         }
+        
+        await reply(event.replyToken, `🔄 「${habitName}」の目標を${goalCount}回に更新しました！`);
     }
-    
-    await reply(event.replyToken, `🎯 目標を${goalCount}回に設定しました！\n\n記録は \`/done 実績/目標\` で行えます。\n例: \`/done 20/${goalCount}\``);
 }
