@@ -1,15 +1,13 @@
-process.on('unhandledRejection', (reason) => {
-	console.error('❌ Unhandled Rejection:', reason);
-});
-
 import express from 'express';
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+console.log(`🔍 実行確認: このコードは最新？ PORT=${PORT}`);
+
 app.get('/ping', (req, res) => {
-  console.log('📡 ping!');
-  res.status(200).send('pong');
+  console.log('📡 ping 受信！');
+  res.status(200).send('pong!');
 });
 
 app.listen(PORT, () => {
