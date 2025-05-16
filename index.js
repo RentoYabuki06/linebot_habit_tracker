@@ -52,13 +52,15 @@ app.post('/webhook', async (req, res) => {
             for (const event of events) {
                 // グループ・ルームへの参加イベント処理
                 if (event.type === 'join') {
-                    console.log("🎉 参加イベント検知:", event.source.type);
-                    const message = "こんにちは！私は習慣記録Botです。\n\n" + 
-                                    "毎日の習慣を記録して、継続をサポートします。\n" +
-                                    "使い方を確認するには `/help` と送信してください。";
-                    await reply(event.replyToken, message);
-                    continue;
+                  console.log('🎉 参加イベント検知:', event.source.type);
+                  try {
+                    await reply(event.replyToken, 'こんにちは！このグループで習慣を記録できます。まずは `/help` を送ってみてください📘');
+                  } catch (err) {
+                    console.error('❌ LINE返信エラー（join時）:', err?.response?.data || err.message);
+                  }
+                  continue;
                 }
+
                 
                 // 友達追加イベント処理
                 if (event.type === 'follow') {
