@@ -20,14 +20,15 @@ function validateSignature(req) {
 
 // Webhookエンドポイント
 app.post('/webhook', async (req, res) => {
-	console.log("🔐 CHANNEL_SECRET:", process.env.LINE_CHANNEL_SECRET);
-	if (!validateSignature(req)) {
-		console.warn("Invalid signature");
-		return res.status(403).send('Invalid signature');
-	}
+	// console.log("🔐 CHANNEL_SECRET:", process.env.LINE_CHANNEL_SECRET);
+	// if (!validateSignature(req)) {
+	// 	console.warn("Invalid signature");
+	// 	return res.status(403).send('Invalid signature');
+	// }
+	console.log("webhook received");
 	res.status(200).send('OK');
-	console.log('📩 Webhook received:', JSON.stringify(req.body, null, 2));
-	console.log("👤 userId:", req.body.events[0]?.source?.userId);
+	// console.log('📩 Webhook received:', JSON.stringify(req.body, null, 2));
+	// console.log("👤 userId:", req.body.events[0]?.source?.userId);
 	// avoid timeout
 
 	// (async () => {
