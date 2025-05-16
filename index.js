@@ -26,9 +26,9 @@ app.post('/webhook', async (req, res) => {
 	res.status(200).send('OK');
 
 	if (!validateSignature(req)) {
-		return res.status(403).send('Invalid signature');
+		console.warn("Invalid signature");
+		return;
 	}
-	
 	try {
 		const events = req.body.events;
 		for (const event of events) {
