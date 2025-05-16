@@ -1,3 +1,7 @@
+// index.js
+import axios from 'axios';
+import crypto from 'crypto';
+import { supabase } from './supabaseClient.js';
 import express from 'express';
 
 const app = express();
@@ -5,11 +9,6 @@ const PORT = process.env.PORT || 8080;
 
 console.log(`🔍 実行確認: このコードは最新？ PORT=${PORT}`);
 
-// index.js
-import express from 'express';
-import axios from 'axios';
-import crypto from 'crypto';
-import { supabase } from './supabaseClient.js';
 
 app.use(express.json());
 
