@@ -314,6 +314,28 @@ async function handleGoalCommand(event, userId, text) {
     await reply(event.replyToken, `🎯 目標を${goalCount}回に設定しました！\n\n記録は \`/done 実績/目標\` で行えます。\n例: \`/done 20/${goalCount}\``);
 }
 
+// LINEへの返信
+async function reply(token, message) {
+	try {
+		await axios.post(
+			'https://api.line.me/v2/bot/message/reply',
+			{
+				replyToken: token,
+				messages: [{ type: 'text', text: message }],
+			},
+			{
+				headers: {
+					Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
+					'Content-Type': 'application/json',
+				},
+			}
+		);
+	} catch (err) {
+		console.error('❌ LINE返信エラー:', err?.response?.data || err.message);
+	}
+}
+
+// Pingエンドポイント
 app.get('/ping', (req, res) => {
 	console.log('🔁 Ping received at', new Date().toISOString());
 	res.status(200).send('pong');
