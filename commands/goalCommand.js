@@ -43,7 +43,8 @@ export async function handleGoalCommand(event, userId, text) {
                 .insert({
                     user_id: userId,
                     title: habitTitle,   // nameではなくtitleカラムを使用
-                    created_at: new Date().toISOString() // created_atカラムを追加
+                    created_at: new Date().toISOString(), // created_atカラムを追加
+					goal_count: goalCount // goal_countカラムを追加
                 })
                 .select();
                 
