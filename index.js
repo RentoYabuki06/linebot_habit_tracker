@@ -1,7 +1,11 @@
+process.on('unhandledRejection', (reason) => {
+	console.error('❌ Unhandled Rejection:', reason);
+});
+
 import express from 'express';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 app.get('/ping', (req, res) => {
   console.log('📡 ping!');
