@@ -3,31 +3,61 @@ import { reply } from '../utils.js';
 
 // streak計算関数を特定の習慣に対応
 export async function calculateStreak(userId, habitName = null) {
+    console.log(`🔍 Streak計算開始: userId=${userId}, habitName=${habitName}`);
+    
     // 連続達成日数を取得
     const today = new Date().toISOString().split('T')[0];
     
-    // habitNameが指定されている場合は特定の習慣、そうでなければすべての習慣
-    let query = supabase
-        .from('logs')
-        .select('logged_at, habits!inner(id, title)')
+    // まず、対象の習慣を取得
+    let habitsQuery = supabase
+        .from('habits')
+        .select('id, title')
         .eq('user_id', userId);
     
-    // 特定の習慣名が指定されている場合、条件を追加
     if (habitName) {
-        query = query.eq('habits.title', habitName);
+        habitsQuery = habitsQuery.eq('title', habitName);
     }
     
-    const { data: logs, error } = await query
+    const { data: habits, error: habitsError } = await habitsQuery;
+    
+    if (habitsError) {
+        console.error('Habits取得エラー:', habitsError);
+        return null;
+    }
+    
+    if (!habits || habits.length === 0) {
+        console.log('習慣が見つかりません');
+        return { currentStreak: 0, maxStreak: 0, emoji: '' };
+    }
+    
+    // 指定された習慣のIDを取得
+    const habitId = habitName ? habits[0].id : habits.map(h => h.id);
+    
+    // 対象の習慣のログを取得
+    let logsQuery = supabase.from('logs').select('*');
+    
+    if (Array.isArray(habitId)) {
+        // 複数の習慣ID
+        logsQuery = logsQuery.in('habit_id', habitId);
+    } else {
+        // 単一の習慣ID
+        logsQuery = logsQuery.eq('habit_id', habitId);
+    }
+    
+    const { data: logs, error: logsError } = await logsQuery
         .order('logged_at', { ascending: false });
-        
-    if (error) {
-        console.error(error);
+    
+    if (logsError) {
+        console.error('Logs取得エラー:', logsError);
         return null;
     }
     
     if (!logs || logs.length === 0) {
+        console.log('ログが見つかりません');
         return { currentStreak: 0, maxStreak: 0, emoji: '' };
     }
+    
+    console.log(`📊 取得したログ: ${logs.length}件`);
     
     // 日付の配列に変換
     const dates = logs.map(log => log.logged_at);
@@ -98,6 +128,8 @@ export async function calculateStreak(userId, habitName = null) {
     else if (currentStreak >= 7) streakEmoji = '🔥';
     else if (currentStreak >= 3) streakEmoji = '✨';
     
+    console.log(`🏆 計算結果: currentStreak=${currentStreak}, maxStreak=${maxStreak}`);
+    
     return {
         currentStreak,
         maxStreak,
@@ -108,7 +140,7 @@ export async function calculateStreak(userId, habitName = null) {
 // 元の関数はそのまま残す
 export async function handleStreakCommand(event, userId, text) {
     // `/streak <習慣名>` の形式にマッチ
-    const match = text.match(/\/streak\s+([^\s]+)/);
+    const match = text?.match(/\/streak\s+([^\s]+)/);
     
     // 習慣名が指定されていない場合はすべての習慣の連続記録を表示
     if (!match) {
