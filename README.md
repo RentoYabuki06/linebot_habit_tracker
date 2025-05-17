@@ -7,8 +7,6 @@
 「続けたいけど、なかなか継続できない…」そんな習慣化の悩みを解決するLINE Botです。  
 日々の実績を簡単に記録し、継続状況を可視化することで、あなたの習慣化をサポートします。
 
-<a href="https://line.me/R/ti/p/@123abc"><img src="https://img.shields.io/badge/LINE-友達追加-00c300?style=for-the-badge&logo=line" height="40"></a>
-
 ---
 
 ## 🌟 このBotでできること
